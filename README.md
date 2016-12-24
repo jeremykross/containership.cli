@@ -1,4 +1,4 @@
-containership.cli
+containership.cli v2
 ==================
 
 ##About
@@ -9,13 +9,14 @@ containership.cli
 ###Description
 Command line interface for ContainerShip
 
-###Author
-ContainerShip Developers - developers@containership.io
+###Authors
+Nick Tate - nick@containership.io
+Containership Developers - developers@containership.io
 
 ##Usage
 
 ###Install
-`npm install containership.cli --save`
+`npm install containership.cli -g`
 
 ###Commands
 From the containership executable, you can see the available commands and options by running:
