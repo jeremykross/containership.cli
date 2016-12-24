@@ -1,2 +1,3 @@
 #! /usr/bin/env node
-require('../index').argv;
+'use strict';
+new (require('../index'))().run()
