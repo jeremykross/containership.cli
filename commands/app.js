@@ -143,6 +143,58 @@ const command = {
             .help('h')
             .alias('h', 'help');
 
+        yargs
+            .command('scale-up <app>', 'scale up application containers', {
+                count: {
+                    description: 'number of containers to scale application up by',
+                    alias: 'c',
+                    default: 1
+                }
+            }, (argv) => {
+                return request.post(`applications/${argv.app}/containers`, { count: argv.count }, null, (err, response) => {
+                    if(err) {
+                        process.stderr.write(`Could not scale up application ${argv.app}!`);
+                        process.exit(1);
+                    } else if(response.statusCode == 404) {
+                        process.stderr.write(`Application ${argv.app} does not exist!`);
+                        process.exit(1);
+                    } else if(response.statusCode != 201) {
+                        process.stderr.write(response.body.error);
+                        process.exit(1);
+                    } else {
+                        process.stdout.write(`Successfully scaled up application ${argv.app}!`);
+                    }
+                });
+            })
+            .help('h')
+            .alias('h', 'help');
+
+        yargs
+            .command('scale-down <app>', 'scale down applicationc containers', {
+                count: {
+                    description: 'number of containers to scale application down by',
+                    alias: 'c',
+                    default: 1
+                }
+            }, (argv) => {
+                return request.delete(`applications/${argv.app}/containers`, { count: argv.count }, (err, response) => {
+                    if(err) {
+                        process.stderr.write(`Could not scale down application ${argv.app}!`);
+                        process.exit(1);
+                    } else if(response.statusCode == 404) {
+                        process.stderr.write(`Application ${argv.app} does not exist!`);
+                        process.exit(1);
+                    } else if(response.statusCode != 204) {
+                        process.stderr.write(response.body.error);
+                        process.exit(1);
+                    } else {
+                        process.stdout.write(`Successfully scaled down application ${argv.app}!`);
+                    }
+                });
+            })
+            .help('h')
+            .alias('h', 'help');
+
         return yargs;
     }
 };
