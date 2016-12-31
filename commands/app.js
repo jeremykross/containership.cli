@@ -53,8 +53,6 @@ const command = {
                     return console.info(columnify(output));
                 });
             })
-            .help('h')
-            .alias('h', 'help');
 
         yargs
             .command('show <app>', 'show requested application information', {}, (argv) => {
@@ -80,8 +78,6 @@ const command = {
                     return console.info(columnify(output));
                 });
             })
-            .help('h')
-            .alias('h', 'help');
 
         yargs
             .command('create <app>', 'create application', application_options, (argv) => {
@@ -100,8 +96,6 @@ const command = {
                     }
                 });
             })
-            .help('h')
-            .alias('h', 'help');
 
         yargs
             .command('edit <app>', 'edit application', application_options, (argv) => {
@@ -120,8 +114,6 @@ const command = {
                     }
                 });
             })
-            .help('h')
-            .alias('h', 'help');
 
         yargs
             .command('delete <app>', 'delete application', {}, (argv) => {
@@ -140,8 +132,6 @@ const command = {
                     }
                 });
             })
-            .help('h')
-            .alias('h', 'help');
 
         yargs
             .command('scale-up <app>', 'scale up application containers', {
@@ -166,8 +156,6 @@ const command = {
                     }
                 });
             })
-            .help('h')
-            .alias('h', 'help');
 
         yargs
             .command('scale-down <app>', 'scale down applicationc containers', {
@@ -192,8 +180,9 @@ const command = {
                     }
                 });
             })
-            .help('h')
-            .alias('h', 'help');
+
+        yargs.help('h')
+        yargs.alias('h', 'help');
 
         return yargs;
     }
