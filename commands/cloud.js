@@ -49,6 +49,9 @@ const command = {
         commandOrganization(yargs);
         commandCluster(yargs);
 
+        yargs.help('h')
+        yargs.alias('h', 'help');
+
         return yargs;
     }
 };
