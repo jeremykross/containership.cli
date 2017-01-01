@@ -4,7 +4,7 @@
   "description": "Command line interface for Containership",
   "main": "application.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha"
+    "test": "mocha"
   },
   "bin": {
     "cscli": "./bin/cli.js"
