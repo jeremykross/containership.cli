@@ -10,10 +10,10 @@ const yargs = require('yargs');
 class ContainershipCli {
     constructor(options) {
         this.options = options || {};
-        this.options.pluginPath = path.normalize(expandHome(this.options.pluginPath || constants.DEFAULT_PLUGIN_PATH));
+        this.options.pluginPath = path.normalize(expandHome(constants.PLUGIN_PATH));
         this.options.pluginModulePath = `${this.options.pluginPath}/node_modules`;
+        this.options.cliConfigPath = path.normalize(constants.CLI_CONFIG_PATH);
 
-        this.options.cliConfigPath = path.normalize(this.options.cliConfigPath || constants.DEFAULT_CLI_CONFIG_PATH);
         configuration.initialize(this.options.cliConfigPath, this.options.pluginPath);
 
         this.commands = fs.readdirSync(path.normalize('./commands')).map(file => file.substring(0, file.indexOf('.js')));
@@ -31,20 +31,22 @@ class ContainershipCli {
             return yargs.command(require(`./commands/${cmd}`)).argv;
         }
 
+        let executed = false;
+
         this.plugins.forEach((name) => {
-            const req = require(`${this.options.pluginModulePath}/${name}`);
-            const plugin = typeof req === 'function' ? new req() : req;
+            const req = `${this.options.pluginModulePath}/${name}`;
+            const pluginCmd = registerPlugin(req);
 
-            if (plugin.version === 'v2' && plugin.cli !== null) {
-                yargs.command(plugin.cli);
-
-                if (plugin.cli.command === cmd) {
-                    yargs.argv;
-                    process.exit(0);
-                }
+            if (pluginCmd === cmd) {
+                yargs.argv;
+                executed = true;
+                return false;
             }
-
         });
+
+        if (executed) {
+            return;
+        }
 
         return this.unknownCommand();
     }
@@ -52,10 +54,25 @@ class ContainershipCli {
     unknownCommand() {
         this.commands.forEach(cmd => yargs.command(require(`./commands/${cmd}`)));
 
-        // plugins would have already been added as we have to instantiate each one to check in the run command
+        this.plugins.forEach((name) => {
+            const req = `${this.options.pluginModulePath}/${name}`;
+            registerPlugin(req);
+        });
 
         yargs.showHelp('log');
     }
+}
+
+function registerPlugin(path) {
+    const req = require(path);
+    const plugin = typeof req === 'function' ? new req() : req;
+
+    if (plugin.cli !== null) {
+        yargs.command(plugin.cli);
+        return plugin.cli.command;
+    }
+
+    return null;
 }
 
 function expandHome(path) {
