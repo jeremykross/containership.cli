@@ -1,18 +1,37 @@
 'use strict';
 
 const configuration = require('../lib/config');
+const constants = require('../lib/constants');
 
+const _ = require('lodash');
+const async = require('async');
 const columnify = require('columnify');
+const csUtils = require('containership.utils');
 const npm = require('npm');
 const request = require('request');
 
 const conf = configuration.get();
-const pluginLocation = conf['plugin-location'];
 
-if (!pluginLocation) {
-    process.stderr.write('You must configure the clients `plugin-location`');
-    process.exit(1);
-}
+// cs plugin list
+// cs plugin add --core || --cli
+// cs plugin upgrade
+// cs plugin search
+// cs plugin remove
+
+/*
+ *
+ * {
+ *  "plugins" {
+ *      "containership.cloud.plugin": {
+ *          "name": "cloud",
+ *          "has_cli": true,
+ *          "has_core": true,
+ *          "version": 1.0.2
+ *      }
+ *  }
+ * }
+ *
+ */
 
 module.exports = {
     command: 'plugin',
@@ -39,36 +58,66 @@ module.exports = {
 function listCommand(yargs) {
     const usage = 'List available plugins';
 
+    function retrievePlugins(path) {
+        return function(cb) {
+            return npm.load({
+                loglevel: 'silent',
+                force: true,
+                prefix: path,
+                'unsafe-perm': true
+            }, () => {
+                return npm.commands.ls([], { json: true }, (err, data) => {
+                    const output = Object.keys(data.dependencies).reduce((accumulator, name) => {
+                        const plugin = data.dependencies[name];
+
+                        if (!csUtils.hasAllKeys(plugin, 'containership.plugin.name')) {
+                            console.error(`Error: Module ${name} does not have the 'containership' key in the package.json`);
+                            console.error('TODO: See blah blah blah docs link for more information');
+                            return accumulator;
+                        }
+
+                        accumulator[plugin.containership.plugin.name] = {
+                            name: name,
+                            version: plugin.version
+                        };
+
+                        return accumulator;
+                    }, {});
+
+                    return cb(null, output);
+                });
+            });
+        }
+    }
+
     yargs
         .command('list', usage, (yargs) => {
             yargs.usage(`list: ${usage}`);
         }, (argv) => {
-            return npm.load({
-                prefix: pluginLocation,
-                'unsafe-perm': true
-            }, () => {
-                return npm.commands.ls([], { json: true }, (err, data) => {
+            return async.parallel({
+                cli: retrievePlugins(constants.CLI_PLUGIN_PATH),
+                core: retrievePlugins(constants.CORE_PLUGIN_PATH)
+            }, (err, results) => {
+                if (err) {
+                    return console.error(err);
+                }
 
-                    const output = Object.keys(data.dependencies).map((name) => {
-                        const plugin = data.dependencies[name];
+                console.info('CLI Plugins');
 
-                        if (name.startsWith('containership.plugin.')) {
-                            name = name.substring('containership.plugin.'.length);
-                        }
+                if (Object.keys(results.cli).length) {
+                    console.info(`${columnify(results.cli)}\n`);
+                } else {
+                    console.info('There are currently no plugins installed\n');
+                }
 
-                        return {
-                            name: name,
-                            version: plugin.version
-                        }
+                console.info('CORE Plugins');
 
-                    });
+                if (Object.keys(results.core).length) {
+                    console.info(`${columnify(results.core)}\n`);
+                } else {
+                    console.info('There are currently no plugins installed\n');
+                }
 
-                    if (output.length > 0) {
-                        return console.info(columnify(output));
-                    } else {
-                        process.stdout.write('No plugins installed!');
-                    }
-                });
             });
         });
 }
@@ -102,11 +151,13 @@ function searchCommand(yargs) {
 }
 
 function addCommand(yargs) {
-    const usage = 'Add a plugin';
-
     yargs
-        .command('add <plugin>', usage, (yargs) => {
-            yargs.usage(`add <plugin>: ${usage}`);
+        .command('add <plugin>', usage, {
+            'core': {
+                description: 'Environment variable for application',
+                default: true
+                alias: 'e'
+            },
         }, (argv) => {
             return npm.load({
                 loglevel: 'silent',

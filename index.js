@@ -10,14 +10,9 @@ const yargs = require('yargs');
 class ContainershipCli {
     constructor(options) {
         this.options = options || {};
-        this.options.pluginPath = path.normalize(expandHome(constants.PLUGIN_PATH));
-        this.options.pluginModulePath = `${this.options.pluginPath}/node_modules`;
-        this.options.cliConfigPath = path.normalize(constants.CLI_CONFIG_PATH);
 
-        configuration.initialize(this.options.cliConfigPath, this.options.pluginPath);
-
-        this.commands = fs.readdirSync(path.normalize('./commands')).map(file => file.substring(0, file.indexOf('.js')));
-        this.plugins = fs.existsSync(this.options.pluginModulePath) ? fs.readdirSync(this.options.pluginModulePath) : [];
+        this.commands = fs.readdirSync(path.normalize('./commands')).map(file => path.basename(file, '.js'));
+        this.plugins = configuration.get().plugins.cli;
     }
 
     run() {
@@ -31,21 +26,11 @@ class ContainershipCli {
             return yargs.command(require(`./commands/${cmd}`)).argv;
         }
 
-        let executed = false;
+        const plugins = configuration.get().plugins.cli;
 
-        this.plugins.forEach((name) => {
-            const req = `${this.options.pluginModulePath}/${name}`;
-            const pluginCmd = registerPlugin(req);
-
-            if (pluginCmd === cmd) {
-                yargs.argv;
-                executed = true;
-                return false;
-            }
-        });
-
-        if (executed) {
-            return;
+        if (plugins[cmd]) {
+            registerPlugin(plugins[cmd].path);
+            return yargs.argv;
         }
 
         return this.unknownCommand();
@@ -54,9 +39,8 @@ class ContainershipCli {
     unknownCommand() {
         this.commands.forEach(cmd => yargs.command(require(`./commands/${cmd}`)));
 
-        this.plugins.forEach((name) => {
-            const req = `${this.options.pluginModulePath}/${name}`;
-            registerPlugin(req);
+        this.plugins.forEach((plugin) => {
+            registerPlugin(plugin.path);
         });
 
         yargs.showHelp('log');
@@ -69,24 +53,7 @@ function registerPlugin(path) {
 
     if (plugin.cli !== null) {
         yargs.command(plugin.cli);
-        return plugin.cli.command;
     }
-
-    return null;
-}
-
-function expandHome(path) {
-    if (!path) {
-        return path;
-    }
-
-    if (path === '~') {
-        return process.env.HOME;
-    }
-
-    path = path.replace('~/', `${process.env.HOME}/`);
-
-    return path;
 }
 
 module.exports = ContainershipCli;
