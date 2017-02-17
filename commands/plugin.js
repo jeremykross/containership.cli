@@ -155,7 +155,7 @@ function addCommand(yargs) {
         .command('add <plugin>', usage, {
             'core': {
                 description: 'Environment variable for application',
-                default: true
+                default: true,
                 alias: 'e'
             },
         }, (argv) => {
