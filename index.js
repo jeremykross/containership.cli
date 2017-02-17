@@ -11,7 +11,7 @@ class ContainershipCli {
     constructor(options) {
         this.options = options || {};
 
-        this.commands = fs.readdirSync(path.normalize('./commands')).map(file => path.basename(file, '.js'));
+        this.commands = fs.readdirSync(`${__dirname}/commands`).map(file => path.basename(file, '.js'));
         this.plugins = configuration.get().plugins.cli;
     }
 
