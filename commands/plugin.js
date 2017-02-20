@@ -9,8 +9,11 @@ const columnify = require('columnify');
 const csUtils = require('containership.utils');
 const npm = require('npm');
 const request = require('request');
+const os = require('os');
 
 const conf = configuration.get();
+
+const pluginLocation = `${os.homedir()}/.containership`;
 
 // cs plugin list
 // cs plugin add --core || --cli
@@ -151,6 +154,8 @@ function searchCommand(yargs) {
 }
 
 function addCommand(yargs) {
+    const usage = 'Add plugins';
+
     yargs
         .command('add <plugin>', usage, {
             'core': {
