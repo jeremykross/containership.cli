@@ -162,17 +162,8 @@ function configureCommand(yargs) {
         yargs.usage(`configure: ${usage}`);
     }, (argv) => {
 
-        const config = _.flow(
-            (argv) => _.drop(argv, 5),
-            (argv) => _.chunk(argv, 2),
-            _.partialRight(_.map, (argv) => {
-                const [k, v] = argv;
-                return [
-                    _.replace(k, /^-{0,2}/, ""),
-                    v
-                ];
-            }),
-            (argv) => _.fromPairs(argv))(process.argv);
+        const undesiredKeys = ['_', 'help', 'h', '$0', 'plugin'];
+        const config = _.omit(argv, undesiredKeys);
 
         fs.writeFile(`${pluginLocation}/${argv.plugin}.json`, JSON.stringify(config), (err) => {
             if(err) {
@@ -216,7 +207,7 @@ function addCommand(yargs) {
                     });
 
                     if (authed_plugin === null) {
-                        process.stderr.write('Not an authenticated ContainerShip plugin. See https://plugins.containership.io for a list of valid plugins');
+                        process.stderr.write('Not an authenticated ContainerShip plugin. See https://plugins.containership.io for a list of valid plugins\n');
                     }
 
                     const source = authed_plugin != null ? authed_plugin.source : argv.plugin;
