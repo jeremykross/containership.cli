@@ -6,6 +6,7 @@ const configuration = require('./lib/config');
 const fs = require('fs');
 const path = require('path');
 const yargs = require('yargs');
+const _ = require('lodash');
 
 class ContainershipCli {
     constructor(options) {
@@ -39,9 +40,7 @@ class ContainershipCli {
     unknownCommand() {
         this.commands.forEach(cmd => yargs.command(require(`./commands/${cmd}`)));
 
-        this.plugins.forEach((plugin) => {
-            registerPlugin(plugin.path);
-        });
+        _.each(_.values(this.plugins), (plugin) => registerPlugin(plugin.path));
 
         yargs.showHelp('log');
     }

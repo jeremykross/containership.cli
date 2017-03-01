@@ -9,8 +9,12 @@ const columnify = require('columnify');
 const csUtils = require('containership.utils');
 const npm = require('npm');
 const request = require('request');
+const os = require('os');
+const fs = require('fs');
 
 const conf = configuration.get();
+
+const pluginLocation = `${os.homedir()}/.containership`;
 
 // cs plugin list
 // cs plugin add --core || --cli
@@ -40,6 +44,7 @@ module.exports = {
         listCommand(yargs);
         searchCommand(yargs);
         addCommand(yargs);
+        configureCommand(yargs);
         updateCommand(yargs);
         removeCommand(yargs);
 
@@ -150,7 +155,29 @@ function searchCommand(yargs) {
         });
 }
 
+function configureCommand(yargs) {
+    const usage = 'Configure plugin';
+
+    yargs.command('configure <plugin>', usage, (yargs) => {
+        yargs.usage(`configure: ${usage}`);
+    }, (argv) => {
+
+        const undesiredKeys = ['_', 'help', 'h', '$0', 'plugin'];
+        const config = _.omit(argv, undesiredKeys);
+
+        fs.writeFile(`${pluginLocation}/${argv.plugin}.json`, JSON.stringify(config), (err) => {
+            if(err) {
+                console.error(err.message);
+            } else {
+                console.log(`Wrote ${argv.plugin}.json configuration file\n`);
+            }
+        });
+    });
+}
+
 function addCommand(yargs) {
+    const usage = 'Add plugins';
+
     yargs
         .command('add <plugin>', usage, {
             'core': {
@@ -180,9 +207,10 @@ function addCommand(yargs) {
                     });
 
                     if (authed_plugin === null) {
-                        process.stderr.write('Not an authenticated ContainerShip plugin. See https://plugins.containership.io for a list of valid plugins');
-                        process.exit(1);
+                        process.stderr.write('Not an authenticated ContainerShip plugin. See https://plugins.containership.io for a list of valid plugins\n');
                     }
+
+                    const source = authed_plugin != null ? authed_plugin.source : argv.plugin;
 
                     return npm.commands.ls([], { json: true }, (err, data) => {
                         if (err) {
@@ -190,12 +218,12 @@ function addCommand(yargs) {
                             process.exit(1);
                         }
 
-                        if (Object.keys(data.dependencies).indexOf(authed_plugin.source) !== -1) {
+                        if (Object.keys(data.dependencies).indexOf(source) !== -1) {
                             process.stderr.write(`The ${argv.plugin} plugin already exists! Did you mean to run 'plugin update'?`);
                             process.exit(1);
                         }
 
-                        npm.commands.install([authed_plugin.source], (err) => {
+                        npm.commands.install([source], (err) => {
                             if (err) {
                                 process.stderr.write('Failed to add plugin!');
                                 process.exit(1);
@@ -237,7 +265,7 @@ function updateCommand(yargs) {
                     });
 
                     if (authed_plugin === null) {
-                        process.stderr.write('Not an authenticated ContainerShip plugin. See https://plugins.containership.io for a list of valid plugins');
+                        process.stderr.write('Not an authenticated ContainerShip plugin. See https://plugins.containership.io for a list of valid plugins\n');
                         process.exit(1);
                     }
 
