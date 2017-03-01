@@ -14,7 +14,7 @@ const fs = require('fs');
 
 const conf = configuration.get();
 
-const pluginLocation = `${os.homedir()}/.containership`;
+const pluginLocation = `${os.homedir()}/.containership/plugins`;
 
 // cs plugin list
 // cs plugin add --core || --cli
