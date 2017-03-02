@@ -190,6 +190,7 @@ function addCommand(yargs) {
                 loglevel: 'silent',
                 force: true,
                 prefix: `${pluginLocation}`,
+                global: true,
                 'unsafe-perm': true
             }, () => {
                 return request({ url: 'http://plugins.containership.io', json: true }, (err, response) => {
